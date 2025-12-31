@@ -2,19 +2,303 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+@layer base {
+  :root {
+    /* Color System */
+    --color-primary-50: 240 249 255;
+    --color-primary-100: 224 242 254;
+    --color-primary-200: 186 230 253;
+    --color-primary-300: 125 211 252;
+    --color-primary-400: 56 189 248;
+    --color-primary-500: 14 165 233;
+    --color-primary-600: 2 132 199;
+    --color-primary-700: 3 105 161;
+    --color-primary-800: 7 89 133;
+    --color-primary-900: 12 74 110;
+    
+    /* Neutral Colors */
+    --color-gray-50: 249 250 251;
+    --color-gray-100: 243 244 246;
+    --color-gray-200: 229 231 235;
+    --color-gray-300: 209 213 219;
+    --color-gray-400: 156 163 175;
+    --color-gray-500: 107 114 128;
+    --color-gray-600: 75 85 99;
+    --color-gray-700: 55 65 81;
+    --color-gray-800: 31 41 55;
+    --color-gray-900: 17 24 39;
+    
+    /* Semantic Colors */
+    --color-success: 34 197 94;
+    --color-error: 239 68 68;
+    --color-warning: 245 158 11;
+    --color-info: 59 130 246;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+    
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus visible styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer components {
+  /* Button Variants */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-ghost {
+    @apply text-gray-700 hover:bg-gray-100 focus:ring-primary-500;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-md {
+    @apply px-4 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  /* Card Component */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200;
+    @apply transition-shadow duration-200;
+  }
+
+  .card-hover {
+    @apply hover:shadow-md;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  .card-body {
+    @apply px-6 py-4;
+  }
+
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+
+  /* Input Components */
+  .input {
+    @apply w-full px-4 py-2.5 text-sm rounded-lg border border-gray-300;
+    @apply bg-white text-gray-900 placeholder-gray-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-200;
+    @apply disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+
+  .input-error {
+    @apply border-red-300 focus:ring-red-500;
+  }
+
+  /* Badge Component */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-200 border-t-primary-600;
+  }
+
+  /* Skeleton Loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Navigation Link */
+  .nav-link {
+    @apply flex items-center px-4 py-3 text-sm font-medium rounded-lg;
+    @apply transition-all duration-200;
+    @apply text-gray-700 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .nav-link-active {
+    @apply bg-primary-50 text-primary-700 border-l-4 border-primary-600;
+    @apply font-semibold;
+  }
+
+  /* Status Indicator */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .status-dot-success {
+    @apply bg-green-500;
+  }
+
+  .status-dot-error {
+    @apply bg-red-500;
+  }
+
+  .status-dot-warning {
+    @apply bg-yellow-500;
+  }
+
+  .status-dot-gray {
+    @apply bg-gray-400;
+  }
 }
 
+@layer utilities {
+  /* Text Utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Scrollbar Styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgb(203 213 225);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(148 163 184);
+  }
+
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "promptly",
   "version": "1.0.0",
-  "description": "Instagram Brand Engagement Tool - Multi-tenant SaaS",
+  "description": "Replies, right on time - Instagram Brand Engagement Tool - Multi-tenant SaaS",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",

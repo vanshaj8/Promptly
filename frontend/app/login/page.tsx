@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { authAPI } from '@/lib/api';
+import { Button, Input, Card, CardBody } from '@/components/ui';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Logo from '@/components/Logo';
+import { routes } from '@/lib/routes';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,86 +22,140 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { token, user } = await authAPI.login(email, password);
+      console.log('Attempting login with:', { email, passwordLength: password.length });
+      const response = await authAPI.login(email, password);
+      console.log('Login successful:', response);
+      
+      const { token, user } = response;
+      
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+      
       Cookies.set('token', token, { expires: 7 });
+      console.log('Token saved to cookies');
       
       // Redirect based on role
-      if (user.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
+      const redirectPath = user.role === 'ADMIN' ? routes.adminBrands : routes.dashboard;
+      console.log('Redirecting to:', redirectPath);
+      
+      // Small delay to ensure cookie is saved, then redirect
+      setTimeout(() => {
+        window.location.href = redirectPath;
+      }, 50);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        stack: err.stack
+      });
+      
+      let errorMessage = 'Invalid email or password';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
+      } else if (err.response?.status === 0 || err.code === 'ERR_NETWORK') {
+        errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Promptly
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-primary-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 animate-fade-in">
+        {/* Logo and Header */}
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" showText={true} />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">
+            Welcome to Promptly
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Instagram Brand Engagement Tool
+          <p className="mt-2 text-sm font-medium text-primary-600">
+            Replies, right on time
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Sign in to manage your Instagram engagement
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-800">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+        {/* Login Card */}
+        <Card className="shadow-soft-lg">
+          <CardBody className="p-8">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-4 animate-slide-up">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-5">
+                <Input
+                  label="Email address"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+
+                <Input
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={loading}
+                className="w-full"
+                disabled={loading}
+              >
+                Sign in
+              </Button>
+
+              <div className="text-center">
+                <p className="text-xs text-gray-500">
+                  Demo credentials: admin@promptly.com / admin123
+                </p>
+              </div>
+            </form>
+          </CardBody>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center">
+          <p className="text-xs font-medium text-primary-600 mb-1">
+            Replies, right on time
+          </p>
+          <p className="text-xs text-gray-500">
+            © 2025 Promptly. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
-

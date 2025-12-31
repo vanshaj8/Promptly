@@ -19,10 +19,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 errors
+// Handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log error for debugging
+    if (error.response) {
+      console.error('API Error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error('API Request Error:', error.request);
+    } else {
+      console.error('API Error:', error.message);
+    }
+    
     if (error.response?.status === 401) {
       Cookies.remove('token');
       if (typeof window !== 'undefined') {
@@ -84,8 +93,16 @@ export interface Brand {
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
+    try {
+      console.log('API URL:', api.defaults.baseURL);
+      console.log('Making login request to:', `${api.defaults.baseURL}/auth/login`);
+      const response = await api.post('/auth/login', { email, password });
+      console.log('Login response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Login API error:', error);
+      throw error;
+    }
   },
   getMe: async (): Promise<{ user: User }> => {
     const response = await api.get('/auth/me');

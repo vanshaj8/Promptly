@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { commentsAPI, Comment, Reply } from '@/lib/api';
+import { Button, Badge, LoadingSpinner, Card, CardBody } from '@/components/ui';
+import { routes, routeWithParams } from '@/lib/routes';
 
 export default function InboxPage() {
   const searchParams = useSearchParams();
@@ -11,9 +13,11 @@ export default function InboxPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
   const [selectedCommentReplies, setSelectedCommentReplies] = useState<Reply[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'OPEN' | 'REPLIED' | undefined>(
-    (searchParams.get('status') as 'OPEN' | 'REPLIED') || undefined
-  );
+  
+  // Get filter from query params - support both 'filter' and 'status' for compatibility
+  const filterParam = searchParams.get('filter') || searchParams.get('status');
+  const statusFilter = filterParam === 'open' ? 'OPEN' : filterParam === 'replied' ? 'REPLIED' : undefined;
+  
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
@@ -56,6 +60,12 @@ export default function InboxPage() {
     }
   };
 
+  const handleFilterChange = (filter: string | undefined) => {
+    // Update URL without page reload
+    const newParams = filter ? { filter } : {};
+    router.push(routeWithParams(routes.inbox, newParams), { scroll: false });
+  };
+
   const handleReply = async () => {
     if (!selectedComment || !replyText.trim()) return;
 
@@ -63,10 +73,11 @@ export default function InboxPage() {
       setReplying(true);
       await commentsAPI.reply(selectedComment.id, replyText);
       setReplyText('');
-      setSelectedCommentReplies([]);
+      // Reload comments and selected comment details
       await loadComments();
-      // Reload selected comment details
-      await loadCommentDetails(selectedComment.id);
+      if (selectedComment) {
+        await loadCommentDetails(selectedComment.id);
+      }
     } catch (error: any) {
       alert(error.response?.data?.error || 'Failed to send reply');
     } finally {
@@ -93,22 +104,26 @@ export default function InboxPage() {
     <DashboardLayout>
       <div className="flex h-[calc(100vh-8rem)]">
         {/* Left Panel: Comment List */}
-        <div className="w-1/3 border-r border-gray-200 flex flex-col">
+        <div className="w-1/3 border-r border-gray-200 flex flex-col bg-white rounded-lg shadow-sm">
           {/* Header with Filters */}
-          <div className="p-4 border-b border-gray-200 bg-white">
+          <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Inbox</h2>
-              <button
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Inbox</h2>
+                <p className="text-xs text-primary-600 font-medium mt-0.5">Replies, right on time</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={loadComments}
-                className="text-sm text-primary-600 hover:text-primary-700"
               >
                 Refresh
-              </button>
+              </Button>
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={() => setStatusFilter(undefined)}
-                className={`px-3 py-1 text-sm rounded-md ${
+                onClick={() => handleFilterChange(undefined)}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
                   statusFilter === undefined
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -117,8 +132,8 @@ export default function InboxPage() {
                 All
               </button>
               <button
-                onClick={() => setStatusFilter('OPEN')}
-                className={`px-3 py-1 text-sm rounded-md ${
+                onClick={() => handleFilterChange('open')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
                   statusFilter === 'OPEN'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -127,8 +142,8 @@ export default function InboxPage() {
                 Open
               </button>
               <button
-                onClick={() => setStatusFilter('REPLIED')}
-                className={`px-3 py-1 text-sm rounded-md ${
+                onClick={() => handleFilterChange('replied')}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
                   statusFilter === 'REPLIED'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -140,10 +155,10 @@ export default function InboxPage() {
           </div>
 
           {/* Comment List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
             {loading && comments.length === 0 ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : comments.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
@@ -162,15 +177,9 @@ export default function InboxPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium text-gray-900">@{comment.username}</span>
-                        <span
-                          className={`px-2 py-0.5 text-xs rounded-full ${
-                            comment.status === 'OPEN'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}
-                        >
+                        <Badge variant={comment.status === 'OPEN' ? 'warning' : 'success'}>
                           {comment.status}
-                        </span>
+                        </Badge>
                       </div>
                       <span className="text-xs text-gray-500">{formatTimeAgo(comment.timestamp)}</span>
                     </div>
@@ -186,7 +195,7 @@ export default function InboxPage() {
         </div>
 
         {/* Right Panel: Comment Details and Reply */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm ml-4">
           {selectedComment ? (
             <>
               {/* Comment Details Header */}
@@ -203,34 +212,30 @@ export default function InboxPage() {
                       <p className="text-sm text-gray-500">{formatDate(selectedComment.timestamp)}</p>
                     </div>
                   </div>
-                  <span
-                    className={`px-3 py-1 text-sm rounded-full ${
-                      selectedComment.status === 'OPEN'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
-                  >
+                  <Badge variant={selectedComment.status === 'OPEN' ? 'warning' : 'success'}>
                     {selectedComment.status}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="text-gray-900 whitespace-pre-wrap">{selectedComment.text}</p>
               </div>
 
               {/* Replies Section */}
               {selectedCommentReplies.length > 0 && (
-                <div className="flex-1 overflow-y-auto p-6 border-b border-gray-200">
+                <div className="flex-1 overflow-y-auto p-6 border-b border-gray-200 scrollbar-thin">
                   <h4 className="font-semibold text-gray-900 mb-4">Replies</h4>
                   <div className="space-y-4">
                     {selectedCommentReplies.map((reply) => (
-                      <div key={reply.id} className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {reply.replied_by || 'You'}
-                          </span>
-                          <span className="text-xs text-gray-500">{formatDate(reply.sent_at)}</span>
-                        </div>
-                        <p className="text-gray-700">{reply.text}</p>
-                      </div>
+                      <Card key={reply.id}>
+                        <CardBody className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {reply.replied_by || 'You'}
+                            </span>
+                            <span className="text-xs text-gray-500">{formatDate(reply.sent_at)}</span>
+                          </div>
+                          <p className="text-gray-700">{reply.text}</p>
+                        </CardBody>
+                      </Card>
                     ))}
                   </div>
                 </div>
@@ -243,23 +248,24 @@ export default function InboxPage() {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Type your reply..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className="input resize-none"
                     rows={4}
                   />
                   <div className="flex justify-end mt-4 space-x-3">
-                    <button
+                    <Button
+                      variant="secondary"
                       onClick={() => setReplyText('')}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       Clear
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="primary"
                       onClick={handleReply}
-                      disabled={!replyText.trim() || replying}
-                      className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      isLoading={replying}
+                      disabled={!replyText.trim()}
                     >
-                      {replying ? 'Sending...' : 'Send Reply'}
-                    </button>
+                      Send Reply
+                    </Button>
                   </div>
                 </div>
               )}
@@ -285,4 +291,3 @@ export default function InboxPage() {
     </DashboardLayout>
   );
 }
-

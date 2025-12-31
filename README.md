@@ -1,6 +1,8 @@
-# Promptly - Instagram Brand Engagement Tool
+# Promptly - Replies, right on time
 
 **Promptly** is a SaaS platform that helps brands manage and respond to Instagram comments and mentions from a unified dashboard. Connect your Instagram Business account and handle all customer interactions in one place.
+
+> **Replies, right on time** - Never miss a customer interaction with Promptly's unified Instagram engagement platform.
 
 ## What Promptly Does
 
@@ -148,21 +150,29 @@ CREATE DATABASE promptly_db;
 3. **Environment Configuration**
 ```bash
 # Backend
-cp backend/.env.example backend/.env
-# Update backend/.env with your database credentials
+# Update backend/src/main/resources/application.properties with:
+# - Database credentials
+# - Facebook App ID and Secret (see Instagram setup below)
+# - JWT secret
+# - Webhook tokens
 
 # Frontend
 cp frontend/.env.local.example frontend/.env.local
 # Update frontend/.env.local with API URL
 ```
 
-4. **Run Migrations**
+4. **Instagram Graph API Setup**
+   - See [INSTAGRAM_SETUP.md](./INSTAGRAM_SETUP.md) for detailed instructions
+   - Quick start: [INSTAGRAM_QUICK_START.md](./INSTAGRAM_QUICK_START.md)
+   - Configure Facebook App ID, Secret, and redirect URI in `application.properties`
+
+5. **Run Migrations**
 ```bash
 cd backend
 npm run migrate
 ```
 
-5. **Start Services**
+6. **Start Services**
 ```bash
 # Terminal 1: Backend
 cd backend

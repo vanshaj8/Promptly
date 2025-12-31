@@ -19,12 +19,14 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
             LoginResponse response = authService.login(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401).body(new java.util.HashMap<String, String>() {{
+                put("error", "Invalid email or password");
+            }});
         }
     }
 
@@ -38,5 +40,6 @@ public class AuthController {
             return ResponseEntity.status(404).build();
         }
     }
+
 }
 

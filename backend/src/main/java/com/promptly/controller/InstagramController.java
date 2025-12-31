@@ -20,16 +20,27 @@ public class InstagramController {
     private InstagramService instagramService;
 
     @GetMapping("/connect-url")
-    public ResponseEntity<Map<String, String>> getConnectUrl(Authentication authentication) {
-        Integer brandId = getBrandId(authentication);
-        Integer userId = Integer.parseInt(authentication.getName());
-        
-        String authUrl = instagramService.getConnectUrl(brandId, userId);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("authUrl", authUrl);
-        
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getConnectUrl(Authentication authentication) {
+        try {
+            Integer brandId = getBrandId(authentication);
+            if (brandId == null) {
+                return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                    put("error", "Admin users cannot connect Instagram accounts");
+                }});
+            }
+            Integer userId = Integer.parseInt(authentication.getName());
+            
+            String authUrl = instagramService.getConnectUrl(brandId, userId);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("authUrl", authUrl);
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 
     @GetMapping("/callback")
@@ -50,32 +61,58 @@ public class InstagramController {
     }
 
     @GetMapping("/account")
-    public ResponseEntity<Map<String, InstagramAccountDto>> getAccount(Authentication authentication) {
-        Integer brandId = getBrandId(authentication);
-        InstagramAccountDto account = instagramService.getAccount(brandId);
-        
-        Map<String, InstagramAccountDto> response = new HashMap<>();
-        response.put("account", account);
-        
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getAccount(Authentication authentication) {
+        try {
+            Integer brandId = getBrandId(authentication);
+            if (brandId == null) {
+                return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                    put("error", "Admin users do not have an Instagram account");
+                }});
+            }
+            InstagramAccountDto account = instagramService.getAccount(brandId);
+            
+            Map<String, InstagramAccountDto> response = new HashMap<>();
+            response.put("account", account);
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 
     @PostMapping("/disconnect")
-    public ResponseEntity<Map<String, String>> disconnect(Authentication authentication) {
-        Integer brandId = getBrandId(authentication);
-        instagramService.disconnect(brandId);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Instagram account disconnected");
-        
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> disconnect(Authentication authentication) {
+        try {
+            Integer brandId = getBrandId(authentication);
+            if (brandId == null) {
+                return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                    put("error", "Admin users do not have an Instagram account");
+                }});
+            }
+            instagramService.disconnect(brandId);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Instagram account disconnected");
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 
     private Integer getBrandId(Authentication authentication) {
         if (authentication != null && authentication.getDetails() != null) {
             @SuppressWarnings("unchecked")
             Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
-            return (Integer) details.get("brandId");
+            Integer brandId = (Integer) details.get("brandId");
+            if (brandId == null) {
+                throw new RuntimeException("Brand ID not found - user may be an admin");
+            }
+            return brandId;
         }
         throw new RuntimeException("Brand ID not found in authentication");
     }

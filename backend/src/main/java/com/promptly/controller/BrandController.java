@@ -19,21 +19,36 @@ public class BrandController {
     private BrandService brandService;
 
     @GetMapping("/me")
-    public ResponseEntity<Map<String, BrandDto>> getMyBrand(Authentication authentication) {
-        Integer brandId = getBrandId(authentication);
-        BrandDto brand = brandService.getBrand(brandId);
-        
-        Map<String, BrandDto> response = new HashMap<>();
-        response.put("brand", brand);
-        
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getMyBrand(Authentication authentication) {
+        try {
+            Integer brandId = getBrandId(authentication);
+            if (brandId == null) {
+                return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                    put("error", "Admin users do not have a brand");
+                }});
+            }
+            BrandDto brand = brandService.getBrand(brandId);
+            
+            Map<String, BrandDto> response = new HashMap<>();
+            response.put("brand", brand);
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(new HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 
     private Integer getBrandId(Authentication authentication) {
         if (authentication != null && authentication.getDetails() != null) {
             @SuppressWarnings("unchecked")
             Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
-            return (Integer) details.get("brandId");
+            Integer brandId = (Integer) details.get("brandId");
+            if (brandId == null) {
+                throw new RuntimeException("Brand ID not found - user may be an admin");
+            }
+            return brandId;
         }
         throw new RuntimeException("Brand ID not found in authentication");
     }

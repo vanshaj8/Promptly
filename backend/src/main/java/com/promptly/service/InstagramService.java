@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -51,10 +53,13 @@ public class InstagramService {
         }
         
         String state = Base64.getEncoder().encodeToString(stateJson.getBytes());
+        
+        // URL encode the redirect URI
+        String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
 
         return String.format(
                 "https://www.facebook.com/v18.0/dialog/oauth?client_id=%s&redirect_uri=%s&scope=instagram_basic,instagram_manage_comments,pages_show_list,pages_read_engagement&state=%s&response_type=code",
-                appId, redirectUri, state
+                appId, encodedRedirectUri, state
         );
     }
 

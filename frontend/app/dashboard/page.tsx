@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
-import { commentsAPI, Comment } from '@/lib/api';
+import { commentsAPI } from '@/lib/api';
+import { Card, CardBody, LoadingSpinner, Button } from '@/components/ui';
+import { routes, routeWithParams } from '@/lib/routes';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -28,9 +30,9 @@ export default function DashboardPage() {
       ]);
 
       setStats({
-        total: allData.pagination.total || allData.comments.length,
-        open: openData.pagination.total || openData.comments.length,
-        replied: repliedData.pagination.total || repliedData.comments.length,
+        total: allData.pagination?.total || allData.comments.length,
+        open: openData.pagination?.total || openData.comments.length,
+        replied: repliedData.pagination?.total || repliedData.comments.length,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -39,82 +41,122 @@ export default function DashboardPage() {
     }
   };
 
-  const handleMetricClick = (status?: 'OPEN' | 'REPLIED') => {
-    const params = status ? `?status=${status}` : '';
-    router.push(`/dashboard/inbox${params}`);
-  };
+  const StatCard = ({ 
+    title, 
+    value, 
+    description, 
+    icon, 
+    color, 
+    onClick 
+  }: { 
+    title: string; 
+    value: number; 
+    description: string; 
+    icon: string; 
+    color: string;
+    onClick: () => void;
+  }) => (
+    <Card 
+      hover 
+      onClick={onClick}
+      className="cursor-pointer transition-all duration-200"
+    >
+      <CardBody className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+            {title}
+          </h3>
+          <span className="text-3xl">{icon}</span>
+        </div>
+        <div className="flex items-baseline space-x-2">
+          <p className={`text-4xl font-bold ${color}`}>{value}</p>
+        </div>
+        <p className="text-sm text-gray-500 mt-3">{description}</p>
+        <div className="mt-4 flex items-center text-sm text-primary-600 font-medium">
+          View details
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </CardBody>
+    </Card>
+  );
 
   return (
     <DashboardLayout>
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
-        <p className="text-gray-600 mb-8">Quick status of your Instagram engagement</p>
+      <div className="space-y-8 animate-fade-in">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+          <p className="text-gray-600 mb-1">Monitor your Instagram engagement at a glance</p>
+          <p className="text-sm font-medium text-primary-600">Replies, right on time</p>
+        </div>
 
+        {/* Stats Grid */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+            <LoadingSpinner size="lg" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Total Comments */}
-            <button
-              onClick={() => handleMetricClick()}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-primary-300 transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-600">Total Comments</h3>
-                <span className="text-2xl">💬</span>
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-sm text-gray-500 mt-2">All comments received</p>
-            </button>
-
-            {/* Open Comments */}
-            <button
-              onClick={() => handleMetricClick('OPEN')}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-yellow-300 transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-600">Open Comments</h3>
-                <span className="text-2xl">⚡</span>
-              </div>
-              <p className="text-3xl font-bold text-yellow-600">{stats.open}</p>
-              <p className="text-sm text-gray-500 mt-2">Need attention</p>
-            </button>
-
-            {/* Replied Comments */}
-            <button
-              onClick={() => handleMetricClick('REPLIED')}
-              className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-green-300 transition-all text-left cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-600">Replied</h3>
-                <span className="text-2xl">✓</span>
-              </div>
-              <p className="text-3xl font-bold text-green-600">{stats.replied}</p>
-              <p className="text-sm text-gray-500 mt-2">Completed</p>
-            </button>
+            <StatCard
+              title="Total Comments"
+              value={stats.total}
+              description="All comments received"
+              icon="💬"
+              color="text-gray-900"
+              onClick={() => router.push(routeWithParams(routes.inbox, { filter: 'all' }))}
+            />
+            <StatCard
+              title="Open Comments"
+              value={stats.open}
+              description="Awaiting your response"
+              icon="⚡"
+              color="text-yellow-600"
+              onClick={() => router.push(routeWithParams(routes.inbox, { filter: 'open' }))}
+            />
+            <StatCard
+              title="Replied"
+              value={stats.replied}
+              description="Successfully responded"
+              icon="✓"
+              color="text-green-600"
+              onClick={() => router.push(routeWithParams(routes.inbox, { filter: 'replied' }))}
+            />
           </div>
         )}
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => router.push('/dashboard/inbox?status=OPEN')}
-              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
-            >
-              View Open Comments
-            </button>
-            <button
-              onClick={() => router.push('/dashboard/inbox')}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              View All Comments
-            </button>
-          </div>
-        </div>
+        <Card>
+          <CardBody className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                <p className="text-sm text-gray-500 mt-1">Common tasks and shortcuts</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="primary"
+                onClick={() => router.push(routeWithParams(routes.inbox, { filter: 'open' }))}
+              >
+                View Open Comments
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => router.push(routes.inbox)}
+              >
+                View All Comments
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => router.push(routes.instagramAccount)}
+              >
+                Instagram Settings
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
       </div>
     </DashboardLayout>
   );
